@@ -17,9 +17,10 @@ def get_active_window_wm_class(display=Xlib.display.Display()):
     """Get active window's WM_CLASS"""
     current_window = display.get_input_focus().focus
     pair = get_class_name(current_window)
+    wmname = get_window_name(current_window, display)
     if pair:
         # (process name, class name)
-        return str(pair[1])
+        return str(pair[1]) + ' (' + str(wmname) + ')'
     else:
         return ""
 
@@ -37,6 +38,22 @@ def get_class_name(window):
                 return get_class_name(parent_window)
             return None
         return wmclass
+    except:
+        return None
+
+def get_window_name(window, display):
+    """Get window's name (recursively checks parents)"""
+    try:
+        wmname = window.get_full_text_property(
+            display.intern_atom('_NET_WM_NAME'),
+            display.get_atom('UTF8_STRING'))
+
+        if (wmname is None):
+            parent_window = window.query_tree().parent
+            if parent_window:
+                return get_window_name(parent_window, display)
+            return None
+        return wmname
     except:
         return None
 
